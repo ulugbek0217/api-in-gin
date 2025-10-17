@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <option name="projectDefaultTargetUuid" value="cc22f6d1-da97-4cba-825c-08b423467987" />
+    <targets>
+      <target name="WSL - openSUSE-Tumbleweed" type="wsl" uuid="cc22f6d1-da97-4cba-825c-08b423467987">
+        <config>
+          <option name="distributionMsId" value="openSUSE-Tumbleweed" />
+          <option name="projectRootOnTarget" value="{exitCode=0, timeout=false, cancelled=false, stdout=/tmp/tmp.z1GnmdEueJ&#13;&#10;, stderr=}/api-in-gin" />
+        </config>
+        <ContributedStateBase type="GoLanguageRuntime">
+          <config>
+            <option name="goPath" value="/home/ulugbek/go" />
+            <option name="goRoot" value="/usr/bin/go" />
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>
