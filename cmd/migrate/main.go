@@ -1,6 +1,7 @@
 package main
 
 import (
+	"api-in-gin/internal/env"
 	"database/sql"
 	"log"
 	"os"
@@ -9,7 +10,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib" // Important: register pgx driver
-	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -17,11 +17,7 @@ func main() {
 		log.Fatal("Please provide migration direction 'up' or 'down'")
 	}
 
-	err := godotenv.Load("internal/env/.env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-	log.Printf("ENV loaded: %s\n", os.Getenv("DATABASE_URL"))
+	log.Printf("ENV loaded: %s\n", env.GetEnvString("DATABASE_URL", "postgresql://root:secret@localhost:5432/events?sslmode=disable"))
 
 	direction := os.Args[1]
 

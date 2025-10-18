@@ -2,11 +2,12 @@ package main
 
 import (
 	"api-in-gin/internal/database"
+	"api-in-gin/internal/env"
 	"context"
 	"log"
-	"os"
 
 	"github.com/jackc/pgx/v5"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type application struct {
@@ -16,7 +17,7 @@ type application struct {
 }
 
 func main() {
-	db, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	db, err := pgx.Connect(context.Background(), env.GetEnvString("DATABASE_URL", "postgresql://root:secret@localhost:5432/events?sslmode=disable"))
 	if err != nil {
 		log.Fatalf("error connecting to database: %v\n", err)
 	}
@@ -24,7 +25,12 @@ func main() {
 
 	models := database.NewModels(db)
 	app := &application{
-		port:      os.Getenv("PORT"),
-		jwtSecret: os.Getenv("JWT_SECRET"),
+		port:      env.GetEnvInt("PORT", 8080),
+		jwtSecret: env.GetEnvString("JWT_SECRET", "some-secret-123456"),
+		models:    models,
+	}
+
+	if err := app.serve(); err != nil {
+		log.Fatal(err)
 	}
 }
