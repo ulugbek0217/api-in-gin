@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -13,19 +14,19 @@ type EventModel struct {
 }
 
 type Event struct {
-	ID          int       `json:"id"`
-	OwnerID     string    `json:"ownerID" binding:"required"`
-	Name        string    `json:"name" binding:"required,min=3"`
-	Description string    `json:"description" binding:"required,min=10"`
-	Date        time.Time `json:"date" binding:"required,datetime=2006-01-02"`
-	Location    string    `json:"location" binding:"required,min=3"`
+	ID          int    `json:"id"`
+	OwnerID     string `json:"ownerID" binding:"required"`
+	Name        string `json:"name" binding:"required,min=3"`
+	Description string `json:"description" binding:"required,min=10"`
+	Date        string `json:"date" binding:"required,datetime=2006-01-02 15:04"`
+	Location    string `json:"location" binding:"required,min=3"`
 }
 
 func (m *EventModel) Insert(event *Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := "INSERT INTO events (owner_id, name, description, date, location) VALUES ($1, $2, $3, $4, $5)"
+	query := "INSERT INTO events (owner_id, name, description, date, location) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 
 	return m.DB.QueryRow(ctx, query, event.OwnerID, event.Name, event.Description, event.Date, event.Location).Scan(&event.ID)
 }
@@ -46,7 +47,7 @@ func (m *EventModel) GetAll() ([]*Event, error) {
 
 	for rows.Next() {
 		var event Event
-		if err := rows.Scan(&event.ID, &event.Name, &event.Description, &event.Date, &event.Location); err != nil {
+		if err := rows.Scan(&event.ID, &event.OwnerID, &event.Name, &event.Description, &event.Date, &event.Location); err != nil {
 			return nil, err
 		}
 
@@ -67,9 +68,9 @@ func (m *EventModel) Get(id int) (*Event, error) {
 	query := "SELECT * FROM events WHERE id = $1"
 
 	var event Event
-	err := m.DB.QueryRow(ctx, query, id).Scan(&event.ID, &event.Name, &event.Description, &event.Date, &event.Location)
+	err := m.DB.QueryRow(ctx, query, id).Scan(&event.ID, &event.OwnerID, &event.Name, &event.Description, &event.Date, &event.Location)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err

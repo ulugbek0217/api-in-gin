@@ -3,6 +3,7 @@ package main
 import (
 	"api-in-gin/internal/env"
 	"database/sql"
+	"errors"
 	"log"
 	"os"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib" // Important: register pgx driver
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {
@@ -17,12 +19,12 @@ func main() {
 		log.Fatal("Please provide migration direction 'up' or 'down'")
 	}
 
-	log.Printf("ENV loaded: %s\n", env.GetEnvString("DATABASE_URL", "postgresql://root:secret@localhost:5432/events?sslmode=disable"))
+	log.Printf("ENV loaded: %s\n", env.GetEnvString("DATABASE_URL", ""))
 
 	direction := os.Args[1]
 
 	// Use "pgx" as driver name (matches the stdlib registration)
-	db, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
+	db, err := sql.Open("pgx", env.GetEnvString("DATABASE_URL", "postgres://root:secret@localhost:5432/events?sslmode=disable"))
 	if err != nil {
 		log.Fatalf("error connecting to db: %v\n", err)
 	}
@@ -61,20 +63,10 @@ func main() {
 		}
 	}()
 
-	//// Get current version
-	//version, dirty, err := m.Version()
-	//if err != nil && err != migrate.ErrNilVersion {
-	//	log.Printf("error getting version: %v\n", err)
-	//} else if err == migrate.ErrNilVersion {
-	//	log.Println("No migrations applied yet")
-	//} else {
-	//	log.Printf("Current version: %d (dirty: %v)\n", version, dirty)
-	//}
-
 	// Execute migration
 	switch direction {
 	case "up":
-		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 			log.Fatalf("error migrating db: %v\n", err)
 		}
 		if err == migrate.ErrNoChange {
@@ -83,10 +75,10 @@ func main() {
 			log.Println("Migrations applied successfully")
 		}
 	case "down":
-		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+		if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 			log.Fatalf("error rolling back migration: %v\n", err)
 		}
-		if err == migrate.ErrNoChange {
+		if errors.Is(err, migrate.ErrNoChange) {
 			log.Println("No migrations to roll back")
 		} else {
 			log.Println("Migrations rolled back successfully")
@@ -94,12 +86,4 @@ func main() {
 	default:
 		log.Fatal("Invalid direction. Use 'up' or 'down'")
 	}
-
-	//// Get new version
-	//newVersion, _, err := m.Version()
-	//if err != nil && err != migrate.ErrNilVersion {
-	//	log.Printf("error getting new version: %v\n", err)
-	//} else if err != migrate.ErrNilVersion {
-	//	log.Printf("New version: %d\n", newVersion)
-	//}
 }
